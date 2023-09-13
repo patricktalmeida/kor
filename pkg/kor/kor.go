@@ -60,18 +60,20 @@ func GetKubeClient(kubeconfig string) *kubernetes.Clientset {
 		kubeconfig, exists := GetKubeConfigPath()
 
 		if !exists {
-			config, err := rest.InClusterConfig()
-			if err != nil {
-				fmt.Printf("Error loading in-cluster config: %v\n", err)
-				os.Exit(1)
-			}
+			if _, err := os.Stat("/var/run/secrets/kubernetes.io/serviceaccount/token"); err == nil {
+				config, err := rest.InClusterConfig()
+				if err != nil {
+					fmt.Printf("Error loading in-cluster config: %v\n", err)
+					os.Exit(1)
+				}
 
-			clientset, err := kubernetes.NewForConfig(config)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to create Kubernetes client: %v\n", err)
-				os.Exit(1)
+				clientset, err := kubernetes.NewForConfig(config)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Failed to create Kubernetes client: %v\n", err)
+					os.Exit(1)
+				}
+				return clientset
 			}
-			return clientset
 		} else {
 			if configEnv := os.Getenv("KUBECONFIG"); configEnv != "" {
 				kubeconfig = configEnv
