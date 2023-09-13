@@ -56,9 +56,9 @@ func GetKubeConfigPath() (string, bool) {
 }
 
 func KubeConfigClient(kubeconfig string) *kubernetes.Clientset {
-	if configEnv := os.Getenv("KUBECONFIG"); configEnv != "" {
-		kubeconfig = configEnv
-	}
+	// if configEnv := os.Getenv("KUBECONFIG"); configEnv != "" {
+	// 	kubeconfig = configEnv
+	// }
 
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 
@@ -95,7 +95,13 @@ func InClusterConfigClient() *kubernetes.Clientset {
 
 func GetKubeClient(kubeconfig string) *kubernetes.Clientset {
 	if kubeconfig == "" {
-		kubeconfig, exists := GetKubeConfigPath()
+		_, exists := GetKubeConfigPath()
+
+		if configEnv := os.Getenv("KUBECONFIG"); configEnv != "" {
+			kubeconfig = configEnv
+		} else {
+			kubeconfig, _ = GetKubeConfigPath()
+		}
 
 		if !exists {
 			clientset := InClusterConfigClient()
