@@ -55,42 +55,50 @@ func GetKubeConfigPath() (string, bool) {
 	return "", false
 }
 
+func KubeConfigClient(kubeconfig string) *kubernetes.Clientset {
+	if configEnv := os.Getenv("KUBECONFIG"); configEnv != "" {
+		kubeconfig = configEnv
+	}
+
+	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to load kubeconfig: %v\n", err)
+		os.Exit(1)
+	}
+
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to create Kubernetes client: %v\n", err)
+		os.Exit(1)
+	}
+	return clientset
+}
+
+func InClusterConfigClient(kubeconfig string) *kubernetes.Clientset {
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		fmt.Printf("Error loading in-cluster config: %v\n", err)
+		os.Exit(1)
+	}
+
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to create Kubernetes client: %v\n", err)
+		os.Exit(1)
+	}
+	return clientset
+}
+
 func GetKubeClient(kubeconfig string) *kubernetes.Clientset {
 	if kubeconfig == "" {
 		kubeconfig, exists := GetKubeConfigPath()
 
 		if !exists {
-			if _, err := os.Stat("/var/run/secrets/kubernetes.io/serviceaccount/token"); err == nil {
-				config, err := rest.InClusterConfig()
-				if err != nil {
-					fmt.Printf("Error loading in-cluster config: %v\n", err)
-					os.Exit(1)
-				}
-
-				clientset, err := kubernetes.NewForConfig(config)
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "Failed to create Kubernetes client: %v\n", err)
-					os.Exit(1)
-				}
-				return clientset
-			}
+			clientset := InClusterConfigClient(kubeconfig)
+			return clientset
 		} else {
-			if configEnv := os.Getenv("KUBECONFIG"); configEnv != "" {
-				kubeconfig = configEnv
-			}
-
-			config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
-
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to load kubeconfig: %v\n", err)
-				os.Exit(1)
-			}
-
-			clientset, err := kubernetes.NewForConfig(config)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to create Kubernetes client: %v\n", err)
-				os.Exit(1)
-			}
+			clientset := KubeConfigClient(kubeconfig)
 			return clientset
 		}
 	}
