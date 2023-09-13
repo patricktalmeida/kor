@@ -44,22 +44,12 @@ func FileExists(filePath string) bool {
 	return !os.IsNotExist(err)
 }
 
-func GetKubeConfigPath() (string, bool) {
+func GetKubeConfigPath() string {
 	home := homedir.HomeDir()
-	kubeConfigPath := filepath.Join(home, ".kube", "config")
-
-	if FileExists(kubeConfigPath) {
-		return kubeConfigPath, true
-	}
-
-	return "", false
+	return filepath.Join(home, ".kube", "config")
 }
 
 func KubeConfigClient(kubeconfig string) *kubernetes.Clientset {
-	// if configEnv := os.Getenv("KUBECONFIG"); configEnv != "" {
-	// 	kubeconfig = configEnv
-	// }
-
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 
 	if err != nil {
@@ -76,36 +66,35 @@ func KubeConfigClient(kubeconfig string) *kubernetes.Clientset {
 }
 
 func InClusterConfigClient() *kubernetes.Clientset {
-	if _, err := os.Stat("/var/run/secrets/kubernetes.io/serviceaccount/token"); err == nil {
-		config, err := rest.InClusterConfig()
-		if err != nil {
-			fmt.Printf("Error loading in-cluster config: %v\n", err)
-			os.Exit(1)
-		}
-
-		clientset, err := kubernetes.NewForConfig(config)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to create Kubernetes client: %v\n", err)
-			os.Exit(1)
-		}
-		return clientset
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		fmt.Printf("Error loading in-cluster config: %v\n", err)
+		os.Exit(1)
 	}
-	return nil
+
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to create Kubernetes client: %v\n", err)
+		os.Exit(1)
+	}
+	return clientset
 }
 
 func GetKubeClient(kubeconfig string) *kubernetes.Clientset {
 	if kubeconfig == "" {
-		kubeconfig, exists := GetKubeConfigPath()
+		kubeconfig := GetKubeConfigPath()
 
-		if !exists {
+		if _, err := os.Stat("/var/run/secrets/kubernetes.io/serviceaccount/token"); err == nil {
 			clientset := InClusterConfigClient()
 			return clientset
 		} else {
-			if configEnv := os.Getenv("KUBECONFIG"); configEnv != "" {
-				kubeconfig = configEnv
+			if kubeConfigEnv := os.Getenv("KUBECONFIG"); kubeConfigEnv != "" {
+				clientset := KubeConfigClient(kubeConfigEnv)
+				return clientset
+			} else {
+				clientset := KubeConfigClient(kubeconfig)
+				return clientset
 			}
-			clientset := KubeConfigClient(kubeconfig)
-			return clientset
 		}
 	} else {
 		clientset := KubeConfigClient(kubeconfig)
