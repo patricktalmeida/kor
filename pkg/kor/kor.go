@@ -107,6 +107,12 @@ func GetKubeClient(kubeconfig string) *kubernetes.Clientset {
 			clientset := InClusterConfigClient()
 			return clientset
 		} else {
+			if configEnv := os.Getenv("KUBECONFIG"); configEnv != "" {
+				kubeconfig = configEnv
+			} else {
+				kubeconfig, _ = GetKubeConfigPath()
+			}
+
 			clientset := KubeConfigClient(kubeconfig)
 			return clientset
 		}
