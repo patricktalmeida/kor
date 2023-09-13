@@ -104,9 +104,10 @@ func GetKubeClient(kubeconfig string) *kubernetes.Clientset {
 			clientset := KubeConfigClient(kubeconfig)
 			return clientset
 		}
+	} else {
+		clientset := KubeConfigClient(kubeconfig)
+		return clientset
 	}
-
-	return nil
 }
 
 func SetNamespaceList(namespaceLists IncludeExcludeLists, kubeClient *kubernetes.Clientset) []string {
