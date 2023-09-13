@@ -9,7 +9,7 @@ import (
 
 var ingressCmd = &cobra.Command{
 	Use:     "ingress",
-	Aliases: []string{"ing"},
+	Aliases: []string{"ing", "ingresses"},
 	Short:   "Gets unused ingresses",
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -19,10 +19,13 @@ var ingressCmd = &cobra.Command{
 			} else {
 				fmt.Println(response)
 			}
+		} else if slackWebhookURL != "" {
+			kor.GetUnusedIngressesSendToSlackWebhook(includeExcludeLists, kubeconfig, slackWebhookURL)
+		} else if slackChannel != "" && slackAuthToken != "" {
+			kor.GetUnusedIngressesSendToSlackAsFile(includeExcludeLists, kubeconfig, slackChannel, slackAuthToken)
 		} else {
 			kor.GetUnusedIngresses(includeExcludeLists, kubeconfig)
 		}
-
 	},
 }
 

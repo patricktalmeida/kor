@@ -8,8 +8,8 @@ import (
 )
 
 var serviceCmd = &cobra.Command{
-	Use:     "services",
-	Aliases: []string{"svc"},
+	Use:     "service",
+	Aliases: []string{"svc", "services"},
 	Short:   "Gets unused services",
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -19,6 +19,10 @@ var serviceCmd = &cobra.Command{
 			} else {
 				fmt.Println(response)
 			}
+		} else if slackWebhookURL != "" {
+			kor.GetUnusedServicesSendToSlackWebhook(includeExcludeLists, kubeconfig, slackWebhookURL)
+		} else if slackChannel != "" && slackAuthToken != "" {
+			kor.GetUnusedServicesSendToSlackAsFile(includeExcludeLists, kubeconfig, slackChannel, slackAuthToken)
 		} else {
 			kor.GetUnusedServices(includeExcludeLists, kubeconfig)
 		}

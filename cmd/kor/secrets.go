@@ -9,7 +9,7 @@ import (
 
 var secretCmd = &cobra.Command{
 	Use:     "secret",
-	Aliases: []string{"scrt"},
+	Aliases: []string{"scrt", "secrets"},
 	Short:   "Gets unused secrets",
 	Args:    cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -19,6 +19,10 @@ var secretCmd = &cobra.Command{
 			} else {
 				fmt.Println(response)
 			}
+		} else if slackWebhookURL != "" {
+			kor.GetUnusedSecretsSendToSlackWebhook(includeExcludeLists, kubeconfig, slackWebhookURL)
+		} else if slackChannel != "" && slackAuthToken != "" {
+			kor.GetUnusedSecretsSendToSlackAsFile(includeExcludeLists, kubeconfig, slackChannel, slackAuthToken)
 		} else {
 			kor.GetUnusedSecrets(includeExcludeLists, kubeconfig)
 		}

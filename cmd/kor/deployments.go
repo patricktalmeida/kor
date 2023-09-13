@@ -8,8 +8,8 @@ import (
 )
 
 var deployCmd = &cobra.Command{
-	Use:     "deployments",
-	Aliases: []string{"deploy"},
+	Use:     "deployment",
+	Aliases: []string{"deploy", "deployments"},
 	Short:   "Gets unused deployments",
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -19,6 +19,10 @@ var deployCmd = &cobra.Command{
 			} else {
 				fmt.Println(response)
 			}
+		} else if slackWebhookURL != "" {
+			kor.GetUnusedDeploymentsSendToSlackWebhook(includeExcludeLists, kubeconfig, slackWebhookURL)
+		} else if slackChannel != "" && slackAuthToken != "" {
+			kor.GetUnusedDeploymentsSendToSlackAsFile(includeExcludeLists, kubeconfig, slackChannel, slackAuthToken)
 		} else {
 			kor.GetUnusedDeployments(includeExcludeLists, kubeconfig)
 		}

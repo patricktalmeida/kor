@@ -8,8 +8,8 @@ import (
 )
 
 var stsCmd = &cobra.Command{
-	Use:     "statefulsets",
-	Aliases: []string{"sts"},
+	Use:     "statefulset",
+	Aliases: []string{"sts", "statefulsets"},
 	Short:   "Gets unused statefulsets",
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -19,6 +19,10 @@ var stsCmd = &cobra.Command{
 			} else {
 				fmt.Println(response)
 			}
+		} else if slackWebhookURL != "" {
+			kor.GetUnusedStatefulsetsSendToSlackWebhook(includeExcludeLists, kubeconfig, slackWebhookURL)
+		} else if slackChannel != "" && slackAuthToken != "" {
+			kor.GetUnusedStatefulsetsSendToSlackAsFile(includeExcludeLists, kubeconfig, slackChannel, slackAuthToken)
 		} else {
 			kor.GetUnusedStatefulsets(includeExcludeLists, kubeconfig)
 		}

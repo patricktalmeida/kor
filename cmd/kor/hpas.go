@@ -8,9 +8,10 @@ import (
 )
 
 var hpaCmd = &cobra.Command{
-	Use:   "hpa",
-	Short: "Gets unused hpas",
-	Args:  cobra.NoArgs,
+	Use:     "horizontalpodautoscaler",
+	Aliases: []string{"hpa", "horizontalpodautoscalers"},
+	Short:   "Gets unused hpas",
+	Args:    cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		if outputFormat == "json" || outputFormat == "yaml" {
 			if response, err := kor.GetUnusedHpasStructured(includeExcludeLists, kubeconfig, outputFormat); err != nil {
@@ -18,6 +19,10 @@ var hpaCmd = &cobra.Command{
 			} else {
 				fmt.Println(response)
 			}
+		} else if slackWebhookURL != "" {
+			kor.GetUnusedHpasSendToSlackWebhook(includeExcludeLists, kubeconfig, slackWebhookURL)
+		} else if slackChannel != "" && slackAuthToken != "" {
+			kor.GetUnusedHpasSendToSlackAsFile(includeExcludeLists, kubeconfig, slackChannel, slackAuthToken)
 		} else {
 			kor.GetUnusedHpas(includeExcludeLists, kubeconfig)
 		}
